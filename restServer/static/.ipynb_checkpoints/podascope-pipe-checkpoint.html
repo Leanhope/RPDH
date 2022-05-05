@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.2/css/all.css" integrity="sha384-/rXc/GQVaYpyDdyxK+ecHPVYJSN9bmVFBvjA/9eOB+pb3F2w2N6fc5qB9Ew5yIns" crossorigin="anonymous">
+
+    <title>podascope 2.0</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/css/default.css"/>
+  </head>
+  <body>
+    <div id="overlay"></div>
+    <nav class="navbar navbar-light bg-light">
+      <a class="navbar-brand poda-reset-pipe" href="#">Rapid Prototyping with podascope</a>
+    </nav>
+
+    <div class="container">
+      <div id="poda-pipe"></div>
+
+      <div id="poda-element-full"></div>
+
+      <div id="poda-loading-icon" class="collapse">
+        <i class="fas fa-cog fa-spin" style="font-size:24px"></i>
+      </div>
+    </div>
+
+    <script type="text/x-handlebars-template" id="poda-element-tmpl">
+      <div class="poda-element poda-no-select" data-elementid="{{eId}}">
+        <span class="poda-clickable poda-draggable arrow-box">
+            {{#tabLabel element.label}}{{element.label}}{{/tabLabel}}
+            <span class="poda-element-numbers pl-1">
+              {{#greaterZero selectedTerms}}
+                ({{selectedTerms}}/{{totalTermCount}})
+              {{else}}
+                {{#equal termCount totalTermCount}}
+                  ({{totalTermCount}})
+                {{else}}
+                  ({{termCount}}/{{totalTermCount}})
+                {{/equal}}
+              {{/greaterZero}}
+            </span>
+        </span>
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="poda-element-full-tmpl">
+      <div>
+
+        <!-- Pipe options panel (e.g. changing scope) -->
+        <div id="poda-pipe-options" class="row mb-2">
+
+          <!-- change scope -->
+          <div id="poda-options-scope" class="col pr-0 d-flex align-items-center" title="Set how many facets from below should be taken into account">
+            <label>Scope:</label><label class="poda-scope-value">{{negScope scope}}</label>
+            <div class="poda-scope-spinner d-flex pl-2" data-min="0" data-max="{{pipeIndex eId false}}">
+                <input class="border-0 poda-scope-spinner-input" type="range" min="{{pipeIndex eId true}}" max="0" value="{{negScope scope}}"/>
+            </div>
+          </div>
+
+          <!-- add / remove facet options and more -->
+          <div id="poda-options-more" class="col-auto align-items-center">
+            <i class="fas fa-plus poda-add-btn" title="add new Facets element"></i>
+            <i class="fas fa-trash-alt poda-remove-btn" title="remove element"></i>
+          </div>
+        </div>
+
+        <table class="table">
+
+          <thead class="poda-content-head">
+            <tr>
+
+              <!-- ARROW LEFT -->
+              <th class="align-top pl-0">
+                {{#isFirstElement this}}
+                  <div class="poda-hidden"><i class="far fa-arrow-alt-circle-left fa-2x"></i></div>
+                {{else}}
+                  <div class="poda-previous-element poda-clickable">
+                    <i class="far fa-arrow-alt-circle-left fa-2x"></i>
+                  </div>
+                {{/isFirstElement}}
+
+              </th>
+
+              <!-- SEARCH BAR & OPTIONS -->
+              <th class="col align-top">
+
+                <div class="poda-search-panel">
+                  <div class="input-group">
+
+                    <div class="input-group-prepend poda-element-path">
+                      <span class="input-group-text"
+                        {{#isNoRootFacet element.tId}}poda-clickable" title="Switch to list of facets"
+                        {{else}}poda-no-select"{{/isNoRootFacet}}>/</span>
+                      {{#isNoRootFacet element.tId}}
+                      <span class="input-group-text poda-no-select">{{element.label}}</span>
+                      {{/isNoRootFacet}}
+                    </div>
+
+                    <input type="text" class="form-control poda-search" placeholder="Search" value="{{searchQuery}}"/>
+
+                    <!--
+                      <div class="input-group-append poda-search-btn">
+                        <span class="input-group-text"><i class="fa fa-search"></i></span>
+                      </div>
+                    -->
+                  </div>
+                </div>
+
+
+                <!-- below search bar (results and option icon) -->
+                <div class="row">
+
+                  <!-- result count -->
+                  <div class="col pr-0">
+                    <span class="small">
+                      Total
+                      {{#equal termCount totalTermCount}}
+                        {{termCount}}
+                      {{else}}
+                        {{termCount}}/{{totalTermCount}}
+                      {{/equal}}
+                      results
+                    </span>
+                  </div>
+
+                  <!-- option toggle -->
+                  <div class="col-auto text-right">
+                    <i class="fas fa-sliders-h poda-option-btn poda-clickable"></i>
+                  </div>
+
+                </div>
+
+
+                <!-- full page element option panel -->
+                <div id="poda-element-options" class="row mb-2 collapse">
+                  <div id="poda-options-sortby" class="col-md-4 poda-option-group">
+                    <div class="container">
+
+                      <div class="row poda-headline"><span>Sorting Mode</span></div>
+
+                      <div data-sortmode="UP" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'UP'}}poda-option-active{{/sortedBy}}">
+                        <span class="mr-2">Up score</span>
+                        {{#sortedBy sortBy 'UP'}}
+                          {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                          {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                        {{/sortedBy}}
+                      </div>
+
+                      <div data-sortmode="DOWN" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'DOWN'}}poda-option-active{{/sortedBy}}">
+                        <span class="mr-2">Down score</span>
+                        {{#sortedBy sortBy 'DOWN'}}
+                          {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                          {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                        {{/sortedBy}}
+                      </div>
+
+                      <div data-sortmode="LABEL" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'LABEL'}}poda-option-active{{/sortedBy}}">
+                        <span class="mr-2">Label</span>
+                        {{#sortedBy sortBy 'LABEL'}}
+                          {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                          {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                        {{/sortedBy}}
+                      </div>
+
+                    </div>
+                  </div>
+                  <div id="poda-options-selection" class="col-md-4 poda-option-group">
+                    <div class="container">
+                      <div class="row poda-headline">Term Selection</div>
+                        <div data-selection="ALL" class="row poda-option-clickable" title="Select all terms that apply to the current search query">Select All</div>
+                        <div data-selection="CLEAR" class="row poda-option-clickable" title="Clear the current term selection">Clear Selection</div>
+                        <div data-selection="INVERT" class="row poda-option-clickable" title="Invert the current term selection">Invert Selection</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </th> <!-- END SEARCH BAR & OPTIONS -->
+
+              <!-- ARROW RIGHT -->
+              <th class="align-top pr-0">
+                <div class="text-right poda-next-element poda-clickable">
+                  <i class="far fa-arrow-alt-circle-right fa-2x {{#isLastElement this}}d-none{{/isLastElement}}"></i>
+                  <i class="fas fa-plus-circle fa-2x {{#isLastElement this}}{{else}}d-none{{/isLastElement}}"></i>
+                </div>
+              </th>
+            </tr>
+          </thead>
+
+          <!-- table content -->
+          <tbody>
+
+            <!-- list of terms -->
+            {{#each terms}}
+              {{> poda-term-tmpl parent=..}}
+            {{/each}}
+
+            {{#if hasMore}}
+            <!-- load more button -->
+            <tr class="poda-term">
+              <td class=""></th>
+              <td class="poda-more-btn">Load More</td>
+              <td class="text-right"></td>
+            </tr>
+            {{/if}}
+
+          </tbody>
+        </table>
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="poda-term-tmpl">
+      <tr class="poda-term {{#if isSelected}}poda-selected{{/if}}">
+
+        <td class="" title="down score">
+          {{#greaterZero downScore}}{{downScore}}{{/greaterZero}}
+        </td>
+
+        <td class="poda-term-label" data-tid="{{node.tId}}">
+          {{node.label}}
+          {{#greaterZero totalChildCount}}
+            {{#greaterZero childCount}}
+              <span class="poda-term-child-count" title="Matching amount of child terms">({{childCount}}/{{totalChildCount}})</span>
+            {{else}}
+              <span class="poda-term-child-count" title="Total amount of child terms">({{totalChildCount}})</span>
+            {{/greaterZero}}
+          {{/greaterZero}}
+        </td>
+
+        <td class="text-right" title="up score">
+          {{#greaterZero upScore}}{{upScore}}{{/greaterZero}}
+        </td>
+
+      </tr>
+    </script>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script> --><!-- Sortable for drag & drop functionality -->
+    <script type="text/javascript" src="static/js/sortable.min.js"></script> <!-- local version for stable version bc. we overwrite methods in podascope-pipe.js -->
+    <script type="text/javascript" src="static/js/podascope-pipe.js"></script>
+  </body>
+</html>

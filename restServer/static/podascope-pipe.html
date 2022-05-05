@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" type="text/css" href="static/css/default.css"/>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.2/css/all.css" integrity="sha384-/rXc/GQVaYpyDdyxK+ecHPVYJSN9bmVFBvjA/9eOB+pb3F2w2N6fc5qB9Ew5yIns" crossorigin="anonymous">
+
+
+    <title>RPDH</title>
+
+  </head>
+  <body>
+
+    <div id="overlay"></div>
+    <nav class="navbar navbar-light bg-light">
+      <a class="navbar-brand poda-reset-pipe" href="#">Rapid Prototyping for the Digital Humanities</a>
+      <button title ="Restore initial state" class="btn btn-sm resetChanges">Reset Changes</button>
+    </nav>
+
+    <div class="container">
+      <!-- <div id = poda-stored-queries></div> -->
+      <hr style = "margin-bottom: -5px;">
+
+      <button class="btn btn-sm btn-light" type="button" data-toggle="collapse" data-target="#collapseQueries" aria-expanded="false" aria-controls="collapseQueries" style="width:100%">
+        Toggle Queries
+      </button>
+
+      <div class="collapse" id ="collapseQueries" style="resize:vertical; margin-top:10px; overflow-y: scroll;"></div>
+      <hr style = "margin-top: 0px; margin-bottom: -20px;">
+      
+      <div id="poda-pipe"></div>
+      
+      <div id="poda-element-full"></div>
+
+      <div id ="queryList"></div>
+
+      <div id="poda-loading-icon" class="collapse">
+        <i class="fas fa-cog fa-spin" style="font-size:24px"></i>
+      </div>
+    </div>
+
+    <script type="text/x-handlebars-template" id="poda-pipe-tmpl">
+    
+      <div>
+      <div class ="outer" style = "display: flex;" >
+        <div class="innerPipe" pipe-id={{pid}} id="innerPipe">
+        </div>
+        <div style = "margin-top:20px;margin-left: auto;order: 2;" pipe-id={{pid}}>
+          <span title ="Add a new Facet" class ="poda-add-btn">
+            <i class="fas fa-plus-circle fa-2x poda-clickable" ></i>
+          </span>
+          <span title ="Remove selected Facet" class ="poda-remove-btn">
+            <i class="fas fa-minus-circle fa-2x poda-clickable" ></i>
+          </span>
+          <!-- <span title ="Store the current query" class ="poda-save-btn">
+            <i class="fas fa-save fa-2x poda-clickable" ></i>
+          </span> -->
+          <span title ="Reset the query" class ="poda-rmvPipe-btn">
+            <i class="fas fa-trash fa-2x poda-clickable" ></i>
+          </span>
+        </div>
+      </div>
+      <hr style ="margin-bottom: 8px; margin-top: 20px;">
+    </div>
+    </script>
+
+    <script type ="text/x-handlebars-template" id ="queryList-tmpl">
+      <div>
+        <hr style ="margin-top:-16px">
+      <div id ="innerQueryList">
+      </div>
+      <hr style ="margin-top:10px">
+     </div>
+    </script>
+
+    <script type ="text/x-handlebars-template" id="queryButton-tmpl">
+      <button pipeID="{{pid}}" style ="margin-right:10px;margin-top:-5px"  class="btn btn-sm btn-info queryButton">{{displayName}}</button>
+    </script>
+
+
+    <div style= "margin-top: 0;">
+    <script type="text/x-handlebars-template" id="poda-element-tmpl">
+      <div>
+
+      <div class="poda-element poda-no-select" data-elementid="{{eId}}">
+     
+        <div class ="dropdown" style ="display:inline">
+        {{#isFirstElement this}}
+        <button style ="margin-left:8px" class="btn btn-sm btn-info pipe-btn" type="button" id="pipe-name">
+          {{parentLabel}}:
+        </button>
+        <button style ="margin-left:8px" class="btn btn-sm btn-secondary pipe-btn" type="button" id="dropdownMenuButton">
+          Find
+        </button>
+
+        {{/isFirstElement}}  
+        
+        {{#isSecondElement this}}
+        <button style ="margin-left:8px" class="btn btn-sm btn-secondary dropdown-toggle pipe-btn" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{operatorText}}
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item poda-clickable" id="dropdownOperator" operator = "And"> <br> </a>
+          <!--<a class="dropdown-item poda-clickable" id="dropdownOperator" operator = "Or">Or</a>-->
+          <a class="dropdown-item poda-clickable" id="dropdownOperator" operator = "Not">Not</a>
+        </div> 
+        {{/isSecondElement}}  
+
+        {{#isRegularElement this}}
+
+        <button style ="margin-left:8px" class="btn btn-sm btn-secondary dropdown-toggle pipe-btn" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{operatorText}}
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item poda-clickable" id="dropdownOperator" operator = "And">And</a>
+          <!--<a class="dropdown-item poda-clickable" id="dropdownOperator" operator = "Or">Or</a>-->
+          <a class="dropdown-item poda-clickable" id="dropdownOperator" operator = "Not">Not</a>
+        </div> 
+        {{/isRegularElement}}  
+
+      </div>
+        <button type="button" class="btn btn-facet btn-sm poda-clickable poda-draggable pipe-btn"> 
+          {{pipeLabel}}
+          <!-- {{#tabLabel pipeLabel}}{{{pipeLabel}}}{{/tabLabel}} -->
+            <span class="poda-element-numbers pl-1">
+                {{#equal selectedFilteredCount selectedAllCount}}
+                  ({{selectedAllCount}})
+                {{else}}
+                  ({{selectedFilteredCount}}/{{selectedAllCount}})
+                {{/equal}}
+            </span>
+            {{#isFirstElement this}}
+            {{else}}
+          {{/isFirstElement}}
+      </button>
+      {{#isFirstElement this}}
+      <button style ="margin-left:8px" class="btn btn-sm btn-secondary pipe-btn" type="button">
+        Intersecting
+      </button>
+    <br>
+    {{/isFirstElement}}
+      </div>
+    </div>
+    </script>
+    </div>
+
+    <script type="text/x-handlebars-template" id="poda-element-full-tmpl">
+      <div>
+
+        <!-- Pipe options panel (e.g. changing scope) -->
+        <div id="poda-pipe-options" class="row mb-2">
+
+          <!-- change scope -->
+         
+          <!-- add / remove facet options and more -->
+        </div>
+
+        <table class="table" >
+          <div id="header" >
+          <thead class="poda-content-head" >
+             
+            <tr>
+              <!-- ARROW LEFT -->
+              <th class="align-top">
+                <div class="poda-clickable" id = "chart">
+                  <!-- <span title ="Add a new Facet" class ="poda-add-pipe">
+                    <i class="fas fa-plus-circle fa-2x poda-clickable" ></i>
+                  </span> -->
+                 </div> 
+              </th>
+
+              <!-- SEARCH BAR & OPTIONS -->
+              <th class="col align-top">
+
+                <div class="poda-search-panel">
+                  <div class="input-group">
+
+                    <div class="input-group-prepend poda-element-path">
+                      <span class="input-group-text
+                        poda-clickable" title="Switch to the root facet"
+                       >/</span>
+                      {{#isNoRootFacet element.tId}}
+                      {{#each path}}
+                      <span title="Switch to facet." class="input-group-text poda-clickable"> {{this.label}} </span>
+                      {{/each}}
+                      <!--<span class="input-group-text poda-no-select">{{element.label}}</span>-->
+                      {{/isNoRootFacet}}
+                    </div>
+
+                    <input type="text" id = "searchBar" class="form-control poda-search" placeholder="Prefix './' to only search in the current facet, './/' to search only in spans." value="{{activeQuery}}"/>
+                    <button class = "btn searchButton" style="box-shadow: none; border-radius: 0%;">Search</button>
+                    <!--
+                      <div class="input-group-append poda-search-btn">
+                        <span class="input-group-text"><i class="fa fa-search"></i></span>
+                      </div>
+                    -->
+                  </div>
+                </div>
+
+
+                <!-- below search bar (results and option icon) -->
+                <div class="row" >
+
+                  <!-- result count -->
+                  <div class="col pr-0">
+                    <span class="small">
+                      Total
+                      {{#equal selectedFilteredCount selectedAllCount}}
+                        {{selectedFilteredCount}}
+                      {{else}}
+                        {{selectedFilteredCount}}/{{selectedAllCount}}
+                      {{/equal}}
+                      results
+                    </span>
+                    <input class="form-check-input" type="checkbox" {{#if searchCase}}checked{{/if}}  id="searchCase" style = "margin-left: 80px; margin-top: 6px;">
+                  <label class="form-check-label small" for="searchCase" style = "margin-left: 100px">
+                    Case Sensitive
+                  </label>
+                    <span class ="small" style ="margin-left: 150px;">
+                      Active Search: {{activeQuery}}
+                    </span>
+                  </div>
+
+                  <!-- option toggle -->
+                  <div class="col-auto text-right">
+                    <i title="Show options." class="fas fa-sliders-h poda-option-btn poda-clickable"></i>
+                  </div>
+
+                </div>
+
+
+                <!-- full page element option panel -->
+                <div id="poda-element-options" class="row mb-2 collapse">
+                  <div id="poda-options-sortby" class="col-md-2 poda-option-group">
+                    <div class="container">
+                      <div class="row poda-headline"><span>Sorting Mode</span></div>
+                      {{#unless hasSpans}}
+                        <div data-sortmode="ABS" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'ABS'}}poda-option-active{{/sortedBy}}">
+                          <span class="mr-2">Absolute Count</span>
+                          {{#sortedBy sortBy 'ABS'}}
+                            {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                            {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                          {{/sortedBy}}
+                        </div>
+
+                        <div data-sortmode="REL" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'REL'}}poda-option-active{{/sortedBy}}">
+                          <span class="mr-2">Relative Count</span>
+                          {{#sortedBy sortBy 'REL'}}
+                            {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                            {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                          {{/sortedBy}}
+                        </div>
+
+                        <div data-sortmode="LABEL" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'LABEL'}}poda-option-active{{/sortedBy}}">
+                          <span class="mr-2">Alphabetical</span>
+                          {{#sortedBy sortBy 'LABEL'}}
+                            {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                            {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                          {{/sortedBy}}
+                        </div>
+
+                        <div data-sortmode="ANN" class="row align-items-center poda-option-clickable {{#sortedBy sortBy 'ANN'}}poda-option-active{{/sortedBy}}">
+                          <span class="mr-2">Annotations</span>
+                          {{#sortedBy sortBy 'ANN'}}
+                            {{#if sortDesc}}<i class="fas fa-long-arrow-alt-down"></i>
+                            {{else}}<i class="fas fa-long-arrow-alt-up"></i>{{/if}}
+                          {{/sortedBy}}
+                        </div>
+                      {{/unless}}
+
+                    </div>
+                  </div>
+                  <div id="poda-options-selection" class="col-md-3 poda-option-group">
+                    <div class="container">
+                      <div class="row poda-headline">Set Visible Context</div>
+                        <label>Context:</label><label class="Pathpoda-scope-value">{{context}}</label>
+                        <input type="range" class="form-range" min="0" max="500" id="customRange2" value = {{context}} style ="max-width: 150px;">
+                        <!--<div class="poda-scope-spinner d-flex pl-2" data-min="0" data-max="{{pipeIndex eId false}}">
+                            <input class="border-0 poda-scope-spinner-input" type="range" min="{{pipeIndex eId true}}" max="0" value="{{negScope scope}}"/>
+                        </div>!-->
+                      </div>
+                    </div>
+                  
+                    <div id="poda-hide-selection" class="col-md-3 poda-option-group">
+                      <div class="container">
+                        <div class="row poda-headline">Deleted Terms</div>
+                        <input class="form-check-input deletedSelctor" type="checkbox" {{#if showDeleted}}checked{{/if}}  id="deletedSelector" title="Select if deleted elements should be displayed.">
+                        <label>Show deleted Elements</label>
+                        <!-- {{#if showDeleted}}
+                          <div class="row poda-option-clickable poda-option-active" id = "show" title="Show all deleted Terms">Show deleted</div>
+                          <div class="row poda-option-clickable" id = "hide" title="Hide all deleted Terms">Hide deleted</div>
+                        {{else}}
+                        <div class="row poda-option-clickable" id = "show" title="Show all deleted Terms">Show deleted</div>
+                          <div class="row poda-option-clickable poda-option-active" id = "hide" title="Hide all deleted Terms">Hide deleted</div>
+                        {{/if}} -->
+                          <div style="width: 100%; display: table;">
+                        </div>
+                      </div>
+                    </div>
+                    {{#isRegularElement this}}
+                    <div id="poda-hide-selection" class="col-md-3 poda-option-group">
+                      <div class="container">
+                        <div class="row poda-headline">Ranking</div>
+                        <input class="form-check-input rankingSelect" type="checkbox" {{#if ranking}}checked{{/if}}  id="rankingSelector" title="Select if this facet should contribute to the ranking.">
+                        <label>Contribute to the ranking</label>
+                        </div>
+                      </div>
+                    </div>
+                    {{/isRegularElement}}
+                    {{#isSecondElement this}}
+                    <div id="poda-hide-selection" class="col-md-3 poda-option-group">
+                      <div class="container">
+                        <div class="row poda-headline">Ranking</div>
+                        <input class="form-check-input rankingSelect" type="checkbox" {{#if ranking}}checked{{/if}}  id="rankingSelector" title="Select if this facet should contribute to the ranking.">
+                        <label>Contribute to the ranking</label>
+                        </div>
+                      </div>
+                    </div>
+                    {{/isSecondElement}}
+                  </div>
+
+                 
+                </div>
+
+              </th> <!-- END SEARCH BAR & OPTIONS -->
+
+              <!-- ARROW RIGHT -->
+              <th class="align-right align-top pl-0">
+                <!--<div class="text-right poda-next-element poda-clickable">
+                  <i class="far fa-arrow-alt-circle-right fa-2x {{#isLastElement this}}d-none{{/isLastElement}}"></i>
+                  <i class="fas fa-plus-circle fa-2x {{#isLastElement this}}{{else}}d-none{{/isLastElement}}"></i>
+                </div> !-->
+                <div title ="Toggle edit/explore mode" style="float:right">
+                  <i id = "editSwitch" class="fas fa-edit fa-2x  poda-clickable poda-edit-mode"></i>
+              </div>
+            </th>
+            <tr id = "editMode" hidden=true >
+              <th></th>
+              <th>  
+                    {{#if hasSpans}}
+                    <div style="float:left">
+                      <span style = "font-size: small;">Add Annotations:</span>
+                      <br>
+                    <select  id="termList" class="form-select" style="margin-right: 3px;">
+                      {{#each termList}}
+                      <option termID = {{this.[0]}} term={{this.[1]}} parent = {{this.[3]}} parentID = {{this.[2]}} value={{@index}}>{{this.[3]}}/{{this.[1]}}</option>
+                      {{/each}}
+                    </select>
+                      <button title="Prepare the highlighted text to be added to the seleced facet." type="button" class="btn btn-sm addSpan" style="margin-right: 3px;"> Add</button>
+                      <button title="Add all prepared annotations to the system." type="button" class="btn btn-sm btn-success confirmAll">Confirm All</button>  
+                    </div>
+                     <br>
+                      <button type="button" class="btn btn-sm" id = "findSpans" style="margin-left:150px;"> Find new Spans</button>
+
+                      {{else}}
+
+                     <div class="poda-clickable addFacet" style = "float:left">
+                      <button type="button" class="btn btn-sm btn-primary" style="margin-right: 3px;"> Add new Facet</button>
+                     </div>  
+
+                     {{#equal termCount 0 }}
+                        <button type="button" class="btn btn-sm" id = "findSpans" style="margin-left:250px;"> Find new Spans</button>
+                     {{/equal}}
+
+                     
+
+                  {{/if}}
+
+                <button type="button" class="btn btn-sm" style ="margin-left:10px;" id = "setWiki"> Set Wikipedia ID</button>
+
+
+                <i title ="Restore selected elements" style="float: right;margin-left: 10px" class="fa fa-redo fa-2x poda-restore-terms poda-clickable"></i>
+                <i title ="Delete selected elements" style="float: right;" class="fa fa-trash fa-2x poda-delete-terms poda-clickable"></i>
+                
+                
+              </th>
+              <th></th>
+            </tr>
+
+            <tr id = "chartRow" hidden=true >
+              <th></th>
+              <th> 
+                  <div id = "dataviz">
+                  </div>
+              </th>
+              <th></th>
+            </tr>
+          
+        </div>
+      </thead>
+
+          <!-- table content -->
+          <tbody>
+            <tr id = "wikiRow" style="border-bottom: thick solid;" >
+              <th>
+
+              </th>
+              <th style = "font-weight: normal;"">
+                <div id = "wikiRef" hidden=true>
+                        {{{wiki}}}
+                </div>
+              </th>
+              <th>
+                <div class="poda-clickable" id = "wikiToggle">
+                  <b class="fab fa-wikipedia-w"></b>
+                 </div> 
+              </th>
+            </tr>
+
+            <!-- list of terms -->
+            {{#each terms}}
+              {{> poda-term-tmpl parent=..}}
+            {{/each}}
+
+            {{#if hasMore}}
+            <!-- load more button -->
+            <tr class="poda-term">
+              <td class=""></th>
+              <td class="poda-more-btn">Load More</td>
+              <td class="text-right"></td>
+            </tr>
+            {{/if}}
+
+          </tbody>
+        </table>
+      </div>
+      <div>      
+    </script>
+
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+    </div>
+    
+    <script type="text/x-handlebars-template" id="poda-modal-tmpl">
+      <span class="close">&times;</span>
+        <!-- Modal content -->
+      <div class="modal-content" style="width: 20%;">
+        <p>Term: {{name}} <br> Path: {{facet}} <br> ID: {{spanID}} </p>
+        <div>
+
+          <button id="goToPath" type="button" class="btn btn-secondary">Go To Path</button>
+          {{#if deleted}}
+            <button id="restoreEntity" type="button" class="btn btn-success">Restore Span</button>
+          {{else}}
+            <button id="deleteEntity" type="button" class="btn btn-danger">Delete Span</button>
+          {{/if}}
+        </div>
+      </div>
+
+    </script> 
+
+    <script type="text/x-handlebars-template" id="poda-modalOptions-tmpl" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                  <b class="modal-title" id="myModalLabel">Options</b>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input class="form-check-input rankingSelect" type="checkbox" {{#if ranking}}checked{{/if}}  id="rankingSelector" title="Select if this facet should contribute to the ranking.">
+                    <label>Contribute to the ranking</label>
+                </div>
+                <!--/modal-body-collapse -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" id="btnDelteYes" href="#">Confirm</button>
+                    <button type="button" class="btn btn-danger" id="btnDelteNo">Close</button>
+                </div>
+                <!--/modal-footer-collapse -->
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+
+    </script> 
+    
+    <script type="text/x-handlebars-template" id="poda-term-tmpl">
+      <tr class="poda-term {{#if isSelected}}poda-selected{{/if}}">
+
+        <td class="thumb">
+          <div>
+            {{{thumb}}}
+          </div>
+        </td>
+        
+        <td class="poda-term-label" data-tid="{{node.tId}}" term={{tid}} isSpan={{isSpan}} startChar = {{startCharacter}} isSelected = {{isSelected}} >
+          <input class="checkboxes" id="termCheckbox" type="checkbox" hidden = "true">
+          {{#if isDeleted}}
+           <span class="entitySpan" id="label" style= "color: gray;">{{{label}}} </span>
+          {{else}}
+          <span class="entitySpan" id="label" style= "color: black;" >{{{label}}} </span>
+          {{/if}}
+          {{#greaterZero totalChildCount}}
+            {{#greaterZero childCount}}
+              <span class="poda-term-child-count" title="Matching amount of child terms">({{childCount}}/{{totalChildCount}})</span>
+            {{else}}
+              <span class="poda-term-child-count" title="Total amount of child terms">({{totalChildCount}})</span>
+            {{/greaterZero}}
+          {{/greaterZero}}
+          {{#greaterZero rankCount}}
+          <span class="poda-term-child-count" title="Total amount of selected Annotations">({{rankCount}})</span>
+          {{/greaterZero}}
+
+          {{#if isSpan}}
+          <br>
+          {{#if full}}
+          {{else}}
+          <span class="poda-more-btn">Load More...</span><br><br>
+          {{/if}}
+          {{/if}}
+          {{#each intersecs}}
+          <span class="badge badge-light intersecLabel" termID={{this.termID}}>{{this.parentLabel}}: 
+            {{this.label}}</span>
+          {{/each}}
+          
+        </td>
+        <td class="text-right">
+          {{#if isSpan}}
+          {{else}}
+          
+          <i title="Navigate down."class="fas fa-level-down-alt poda-clickable goDeeper" termID = {{this.tid}}></i>
+          {{/if}}
+        </td>
+
+      </tr>
+    </script>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script> --><!-- Sortable for drag & drop functionality -->
+    <script type="text/javascript" src="static/js/sortable.min.js"></script> <!-- local version for stable version bc. we overwrite methods in podascope-pipe.js -->
+    <script type="text/javascript" src="static/js/podascope-pipe.js"></script>
+  </body>
+</html>

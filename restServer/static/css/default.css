@@ -1,0 +1,358 @@
+.btn {
+  box-shadow: 3px 3px 2px 0px rgba(0,0,0,0.3);
+}
+
+.pipe-btn {
+  margin-top: 10px;
+}
+
+.show {display: block;}
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  /*border: 1px solid #888;
+  width: 30%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+} 
+
+.entities {
+  line-height: 1;
+}
+
+
+[data-entity] {
+   margin: 1px 0.25em;
+   line-height: 1;
+   display: inline-block;
+   border-radius: 0.25em;
+   border: 1px solid;
+}
+
+[data-entity]::after {
+  box-sizing: border-box;
+  content: attr(data-entity);
+  font-size: 0.6em;
+  line-height: 1;
+  border-radius: 0.35em;
+  text-transform: uppercase;
+  display: inline-block;
+  vertical-align: text-bottom;
+  margin: 0px 0px 0.1rem 0.5rem;
+}
+
+[data-entity][data-entity="person"] {
+  background: rgba(166, 226, 45, 0.2);
+  border-color: rgb(166, 226, 45);
+}
+
+[data-entity][data-entity="person"]::after {
+  background: rgb(166, 226, 45);
+}
+[data-entity][deleted="True"] {
+  background-color :  orangered;
+}
+
+:root {
+  --poda-element-color: #D8D8D8;
+  --poda-element-color-inscope: #AFDBAF;
+  --poda-element-color-selected: #F39E49;
+}
+
+body {
+  margin-bottom: 2em;
+}
+
+#overlay {
+  position: fixed; /* Sit on top of the page content */
+  display: none; /* Hidden by default */
+  width: 100%; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.1); /* Black background with opacity */
+  z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+  cursor: progress; /* Add a pointer on hover */
+}
+
+#poda-loading-icon {
+  position: fixed;
+  height: 24px;
+  bottom: 20px;
+  left: 20px;
+}
+
+#poda-loading-icon i {
+  height: 24px;
+  width: 24px;
+}
+.thumb {
+  display : flex;
+  justify-content: center;
+  align-items: center;
+  height: 50px;
+}
+label {
+  vertical-align: middle;
+  margin:0;
+  padding-right: 5px;
+}
+
+#poda-pipe {
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.poda-no-select {
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+/* hides elements but keeps space */
+.poda-hidden {
+  visibility: hidden;
+}
+
+
+/***********************************/
+/* ELEMENT (small) - element of pipe */
+
+.poda-element {
+  display: inline;
+  vertical-align:center;
+  margin-top: 0.5em;
+}
+
+.poda-element span {
+  color: #333;
+  font-weight: bold;
+  overflow-wrap: break-word;
+}
+
+.poda-element-numbers {
+  color: #666 !important;
+  font-size: small;
+}
+
+.poda-element-selected > span {
+  background: var(--poda-element-color-selected);
+  border: 0px solid transparent;
+  border-bottom-color: #585858;
+  border-bottom-width: 2px;
+}
+
+.poda-in-scope {
+  background: var(--poda-element-color);
+  border-color: var(--poda-element-color);
+  border-left-style: hidden;
+}
+
+.poda-in-scope span {
+  background: var(--poda-element-color-inscope);
+}
+
+#poda-options-more i:hover {
+  color: #185ABC;
+  cursor: pointer;
+}
+
+/* arrow adopted from: http://www.cssarrowplease.com/ */
+.arrow-box {
+  color: #424242;
+  position: relative;
+  background: var(--poda-element-color);
+  padding: 4px;
+  margin-right: 16px; /* switch to right if arrow should be right */
+  word-spacing: -4px;
+}
+
+.arrow-box:after {
+  left: 100%; /* switch to left if arrow should be right */
+  top: 0%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  border-left-color: var(--poda-element-color); /* switch to left if arrow should be right */
+  border-width: 16px 13px 13px 8px;
+  /*margin-top: -13px;*/ /* only required if top != 0 */
+}
+
+/* to color the arrow if a pipe element is selected */
+.arrow-box-selected:after {
+  border-left-color: var(--poda-element-color-selected); /* switch to left if arrow should be right */
+}
+
+.arrow-box-in-scope:after {
+  border-left-color: var(--poda-element-color-inscope); /* switch to left if arrow should be right */
+}
+
+
+/***********************************/
+/* SEARCH BAR */
+
+.poda-previous-element {
+  color: #333;
+}
+
+.poda-next-element {
+  color: #333;
+}
+
+
+/***********************************/
+/* ELEMENT FULL (whole page) */
+
+#poda-element-full {
+  padding-top: 0.0em;
+}
+
+.poda-content-head tr th {
+  border: 0px solid transparent;
+  padding-bottom: 1em;
+}
+
+.poda-sortedby {
+  color: black !important;
+}
+
+.poda-clickable {
+  text-transform: capitalize;
+}
+
+.poda-clickable:hover {
+  color: #185ABC;
+  cursor: pointer;
+}
+
+.spinner {
+  margin-left: 5px;
+  width: 184px;
+  height: 30px;
+}
+
+.spinner input[type=text] {
+  width: 100px;
+  text-align: center;
+}
+
+.poda-more-btn{
+  width: 100%;
+  color: #185ABC;
+  font-weight: bold;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+
+/***********************************/
+/* ELEMENT OPTIONS */
+
+.poda-option-group {
+  padding-right: 0em;
+}
+
+.poda-option-group div {
+  color: #666;
+  font-weight: normal;
+  font-size: 92%;
+  padding-top: 0.2em;
+}
+
+.poda-option-clickable:hover {
+  color: #185ABC !important;
+  cursor: pointer !important;
+}
+.table {
+  border-collapse: separate; /* Don't collapse */
+  border-spacing: 0;
+}
+
+thead { position: sticky; 
+  top: 0;
+  border-bottom: 2px solid;
+  background:white;
+}
+
+
+.poda-option-group .poda-headline {
+  color: #333;
+  cursor: default;
+  font-weight: bold;
+  font-size: medium;
+  font-style: italic;
+  padding-top: 1em;
+  padding-bottom: 0.1em;
+  margin-bottom: 0.3em;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-color: gray;
+}
+
+.poda-option-active {
+  color: #333333 !important;
+  font-weight: bold !important;
+}
+
+
+/***********************************/
+/* ELEMENT TERMS */
+
+.poda-term:hover {
+  background-color: #EEE;
+}
+
+.poda-term td {
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+}
+
+.poda-term-label:hover {
+  cursor: pointer;
+  color: #185ABC;
+}
+
+.poda-term-child-count {
+  font-size: small;
+  color: gray;
+}
+
+.poda-selected {        
+  color: #1a1a1a;
+  background-color: #EEF;
+  font-weight: bold;
+}
